@@ -1,0 +1,225 @@
+<!doctype html="">
+<header>
+  <title>Shut the Box</title>
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+</header>
+
+<body>
+  <h1>Shut the Door</h1>
+  <p>The point of this game is to roll the dice and shut the numbers that add up to the total rolled. The game ends when you've run out of numbers to shut or you've shut them all.</p>
+  <div id="cardsToFlip">
+
+    <input type="button" value="1" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="2" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="3" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="4" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="5" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="6" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="7" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="8" data-flipped="false" onclick="flipCard(this)">
+
+    <input type="button" value="9" data-flipped="false" onclick="flipCard(this)">
+  </div>
+  <br>
+  <hr>
+  <input id="endTurnBtn" type="button" name="" value="End Turn" onclick="endTurn()" disabled="true" ;>
+  <!--Should increment the number of turns -->
+
+  <input type="button" name="" value="End Game" onclick="endGame()">
+  <!--should reset everything and show the score to the player -->
+
+
+  <h1>Dice</h1>
+
+  <input id="dice1" type="button" value="Roll">
+
+  <input id="dice2" type="button" value="Me">
+  <br>
+
+  <input id="dr" type="button" value="Roll Dice" onclick="rollDice();">
+
+  <script>
+    var numberOfTurns = 0;
+    var runningTotal = 0;
+
+    function endGame() {
+      var finalScore = 0;
+      //display score to player
+      $('#cardsToFlip').children('input').each(function() {
+
+        if ($(this).prop("disabled") !== true) {
+          finalScore = finalScore + parseInt(this.value);
+        }
+      });
+      if (finalScore == 0) {
+        alert("You Shut the Door with Score of 0!");
+      } else {
+        alert("You got a score of " + finalScore);
+      }
+      //reset Everything
+      //unflip cards
+      $('#cardsToFlip').children('input').each(function() {
+        $(this).data("flipped", false);
+        $(this).removeClass("flip");
+        $(this).css("color", "#FFF");
+        $(this).prop("disabled", false);
+      });
+      numberOfTurns = 0;
+      runningTotal = 0;
+      $("#endTurnBtn").prop("value", "End Turn");
+    }
+
+    function flipCard(currentCard) {
+      if ($(currentCard).data("flipped") == true) {
+        $(currentCard).data("flipped", false);
+
+      } else if ($(currentCard).data("flipped") == false) {
+        $(currentCard).data("flipped", true);
+      }
+      $(currentCard).toggleClass("flip");
+    }
+
+    function endTurn() {
+
+      var diceSum = parseInt($("#dice1").val()) + parseInt($("#dice2").val());
+
+      // check sum of flipped cards
+      runningTotal = 0;
+      var arrayOfFlippedCards = [];
+
+      $('#cardsToFlip').children('input').each(function() {
+
+        if ($(this).data("flipped") == true && $(this).prop("disabled") !== true) {
+          runningTotal = runningTotal + parseInt(this.value);
+          arrayOfFlippedCards.push(this);
+        }
+
+      });
+
+
+      if (runningTotal == diceSum) {
+        //disable the butttons selected
+        arrayOfFlippedCards.forEach(function(obj) {
+          obj.disabled = "true";
+          //debugger;
+          obj.setAttribute("style", "color: sandybrown;");
+        });
+        $("#dr").prop("disabled", false);;
+        alert("success");
+        runningTotal = 0;
+        diceSum = 0;
+        arrayOfFlippedCards = [];
+        $("#endTurnBtn").prop("disabled", true);
+      } else if (runningTotal !== diceSum) {
+        alert("Please selet new cards");
+      }
+      //determine if that's a valid case and allow them to roll again
+
+
+
+
+    }
+
+    function rollDice() {
+
+      //  debugger;
+      $("#dice1").val(Math.ceil(Math.random() * 6));
+
+      $("#dice2").val(Math.ceil(Math.random() * 6));
+
+      $("#dr").prop("disabled", true);
+      numberOfTurns += 1;
+      $("#endTurnBtn").prop("value", "End Turn " + numberOfTurns);
+      $("#endTurnBtn").prop("disabled", false);
+
+      var testValueArr = [];
+      //Checks if the you can
+      //sort the list
+      //remove numbers greater than dice rolled
+      $('#cardsToFlip').children('input').each(function() {
+
+        if ($(this).prop("disabled") !== true) {
+          console.log(this.value);
+          testValueArr.push(this.value);
+        }
+      });
+      var sumToBeat = parseInt($("#dice1").val()) + parseInt($("#dice2").val());
+
+      var filteredArr = testValueArr.filter(function(x) {
+        x = parseInt(x);
+        return x <= sumToBeat;
+      });
+
+      console.log(filteredArr);
+      var filterLength = filteredArr.length;
+
+
+      var isSumPossible = function(arrayOFNumbers, threshold, possibleSummands) {
+        function f(i, threshold, possibleSummands) {
+          if (possibleSummands === 0) return threshold === 0;
+          while (i < arrayOFNumbers.length) {
+            if (f(i + 1, threshold - arrayOFNumbers[i], possibleSummands - 1)) {
+              return true;
+            }
+            i++;
+          }
+          return false;
+        }
+        arrayOFNumbers.sort();
+        return f(0, threshold, possibleSummands);
+      }
+
+
+      var isItPossibleToBeat = false;
+      for (var i = 0; i < filteredArr.length; i++) {
+        if (isSumPossible(filteredArr, sumToBeat, i) === true) {
+          isItPossibleToBeat = true;
+          return
+        }
+      }
+      if (isItPossibleToBeat == false) {
+        endGame();
+      }
+    }
+  </script>
+
+  <style media="screen">
+    input {
+      background-color: lightgreen; 
+      text-align: center;
+      text-decoration: none;
+      width: 120px;
+      height: 30px;
+      border-radius: 4px;
+    }
+
+    #cardsToFlip input {
+      width: 30px;
+      height: 45px;
+      background-color: sandybrown;
+      color: white;
+      font-weight: bold;
+    }
+
+    #dice1,
+    #dice2 {
+      border: black 3px solid;
+      background: white;
+      width: 45px;
+      height: 45px;
+    }
+
+    .flip {
+      border: 3px solid blue;
+    }
+  </style>
+</body>
+
+</html>
